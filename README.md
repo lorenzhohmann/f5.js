@@ -11,18 +11,9 @@ A couple of simple examples:
 f5("#foo").when("click", () => {
   alert("bar");
 });
-
-// custom f5.js function to add add toggler element to an element (accordion) with additional parameters
-f5(".toggler-content").addToggler(
-  f5(".toggler"),
-  () => {
-    console.log("toggled");
-  },
-  { closeOnLoad: true, closeOthers: true }
-);
 ```
 
-My intention is to create a very simple and lightweight library that everyone can understand and use without much understanding.
+My intention is to create a very simple and lightweight library (f5.js is less than 2KB!!) that everyone can understand and use without much understanding.
 Meanwhile there are so many libraries which are much too big (e.g. jQuery) and contain too many "unnecessary" functions. The many ingenious frameworks often have a high development and customization effort, but what about the good old small web applications without Node.js Server as backend? Exactly here f5.js should help and similar to jQuery it should support you as a developer and be of great advantage especially for beginners.
 
 # Installation
@@ -33,7 +24,7 @@ Meanwhile there are so many libraries which are much too big (e.g. jQuery) and c
 
 # General Usage
 
-The `f5` selector is the keyword to use f5.js functions.
+The `f5()` selector is the keyword to use f5.js functions.
 
 ```javascript
 let f5element = f5("#foobar");
@@ -42,22 +33,30 @@ let f5element = f5("#foobar");
 f5.js is designed so that you can concatenate function calls, because the f5 element is always returned (with exceptions).
 
 ```javascript
-f5('#foobar').html('<p>new HTML content</p>).css('marginTop', '10px').data('foo', 'bar').show();
+f5("#foobar")
+  .html("<p>new HTML content</p>")
+  .css("margin-top", "10px")
+  .data("foo", "bar")
+  .show();
 ```
 
 # Functions
 
-| DOM interaction | CSS          | Event Handling | Ajax       | f5.js Special Features |
-| --------------- | ------------ | -------------- | ---------- | ---------------------- |
-| .addClass()     | .css()       | .when()        | .getJSON() | .addToggler()          |
-| .attr()         | .hide()      |                | .getText() |
-| .data()         | .isVisible() |
-| .each()         | .show()      |
-| .exists()       | .toggle()    |
-| .hasClass()     |
-| .html()         |
-| .removeClass()  |
-| .toggleClass()  |
+Here's a list of all available functions. The explanation and usage with examples is shown below.
+| DOM interaction | CSS | Event Handling | Ajax | Custom
+| --------------- | ------------ | -------------- | ---------- | --------|
+| .addClass() | .css() | .when() | .getJSON() | Document Ready |
+| .attr() | .hide() | | .getText() |
+| .data() | .isVisible() |
+| .each() | .show() |
+| .exists() | .toggle() |
+| .first() |
+| .hasClass() |
+| .html() |
+| .last() |
+| .parent() |
+| .removeClass() |
+| .toggleClass() |
 
 ## .addClass(className)
 
@@ -67,37 +66,6 @@ Adds a className to the element.
 // add class
 f5(".foo").addClass("bar");
 ```
-
-## .addToggler(togglerElements, callback, options, identifier = "id")
-
-This functions allows you to add an toggler element to an element. The data identifier of the elements has to be the same.
-Usage example: accordion
-
-```html
-<h1 class="toggler" data-id="1">Test Toggler 1</h1>
-<h1 class="toggler" data-id="2">Test Toggler 2</h1>
-<p class="toggler-content" data-id="1">
-  1: Lorem ipsum dolor sit amet, consetetur sadipscing elitr
-</p>
-<p class="toggler-content" data-id="2">
-  2: Lorem ipsum dolor sit amet, consetetur
-</p>
-```
-
-```javascript
-f5(".toggler-content").addToggler(
-  f5(".toggler"),
-  () => {
-    console.log("toggled");
-  },
-  { closeOnLoad: true, closeOthers: true }
-);
-```
-
-### Options:
-
-- closeOnLoad (bool, default: false): Close all content containers on page load
-- closeOthers (bool, default: false): Close other content container when click
 
 ## .attr(key, value)
 
@@ -147,10 +115,18 @@ f5("p").each((element) => {
 
 ## .exists()
 
-This functions return a boolean if an element exists in the DOM
+This functions return a boolean if an element exists in the DOM.
 
 ```javascript
-let specialItemExists = $(".product#cat-32").exists();
+let specialItemExists = f5(".product#cat-32").exists();
+```
+
+## .first()
+
+This functions return the first element of the current selector.
+
+```javascript
+let firstParagraphOnPage = f5("p").first();
 ```
 
 ## .getJSON(url, data)
@@ -208,7 +184,26 @@ f5("div.container").html("<p>new HTML content</p>");
 Returns if the element is visible in the DOM.
 
 ```javascript
-let visibility = $("#foobar").isVisible();
+let visibility = f5("#foobar").isVisible();
+```
+
+## .last()
+
+This functions return the last element of the current selector.
+
+```javascript
+let lastParagraphOnPage = f5("p").last();
+```
+
+## .parent(selector)
+
+This function returns the parent node with the passed selector.
+It also checks if the parent, parent, parent, etc. node exists and returns this node when possible.
+
+```javascript
+let parent = f5("p").parent();
+let parentDiv = f5("p").parent("div");
+let parentActiveClass = f5("p").parent(".active");
 ```
 
 ## .removeClass(className)
@@ -216,7 +211,7 @@ let visibility = $("#foobar").isVisible();
 Removes a className from the element.
 
 ```javascript
-$(".foo").removeClass("bar");
+f5(".foo").removeClass("bar");
 ```
 
 ## .show()
@@ -245,10 +240,10 @@ Toggles a className. Means that if the element has the className it will be remo
 
 ```javascript
 // adds class .bar
-$(".foo").toggleClass("bar");
+f5(".foo").toggleClass("bar");
 
 // removes class .bar
-$(".foo").toggleClass("bar");
+f5(".foo").toggleClass("bar");
 ```
 
 ## .when(event, callback)
@@ -262,16 +257,43 @@ f5("#foobar").when("click", (event) => {
 });
 ```
 
-# Planned features
+# Custom
 
-- call methods once for all elements of a selector, e.g. p
-- document ready function
+## Document Ready
+
+This event is fired when the whole page with all its ressources has been loaded.
+
+```javascript
+f5(function () {
+  console.log("Document loaded");
+});
+```
+
+# Planned features 🌟
+
+- automatic tests
 - fadeIn(): Fades an element in
 - fadeOut(): Fades an element out
 - inView(): Checks if element is in user's view
-- parent(): Get parent of element
-- child(): Get child of element
 - width(): Get element width
 - height(): Get element height
 - trigger(): Trigger JS events
 - much more!
+
+# Changelog
+
+## 1.1
+
+- ADDED call methods once for all elements of a selector, e.g. p
+- ADDED first(): Get first element of the current selector
+- ADDED last(): Get last element of the current selector
+- UPDATED README.md
+- REMOVED addToggler() - not fitting to f5.js concept
+- ADDED document ready function
+- ADDED parent(): Get parent of element
+- ADDED child(): Get child of element
+- UPDATED Copyright
+
+## 1.0
+
+- Initial functions

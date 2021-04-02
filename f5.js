@@ -3,19 +3,19 @@
  * ---------
  * This JS library is simliar to some jQuery functions.
  * My intension was to create a small and lightweight alternative without all the unused methods.
- * There are also some features that save you work on repetitive tasks, such as accordions (toggler).
  *
  * @author Lorenz Hohmann
+ * @version 1.1
  */
 
 /**
- * This method returns a F5 object for the passed selector
+ * This method returns a F5 object for the passed selector.
  *
  * @param {string} selector
  */
 let f5 = (selector) => {
   if (typeof selector == "function") {
-    console.log("Not implemented yet");
+    document.addEventListener("DOMContentLoaded", selector);
     return false;
   }
   return new F5(selector);
@@ -23,13 +23,13 @@ let f5 = (selector) => {
 
 class F5 {
   /**
-   * Builds a F5 object and set default values
+   * Builds a F5 object and set default values.
    *
    * @param {string} selector
    */
   constructor(selector) {
     this.selector = selector;
-    this.element = document.querySelector(selector);
+    this.elements = document.querySelectorAll(selector);
   }
 
   /**
@@ -39,9 +39,9 @@ class F5 {
    */
   html(html) {
     if (html) {
-      this.element.innerHTML = html;
+      this.elements.forEach((e) => (e.innerHTML = html));
     }
-    return this.element.innerHTML;
+    return this.elements[0].innerHTML;
   }
 
   /**
@@ -52,9 +52,9 @@ class F5 {
    */
   attr(key, value) {
     if (!value) {
-      return this.element.getAttribute(key);
+      return this.elements[0].getAttribute(key);
     }
-    this.element.setAttribute(key, value);
+    this.elements.forEach((e) => e.setAttribute(key, value));
     return this;
   }
 
@@ -66,9 +66,12 @@ class F5 {
    */
   data(key, value) {
     if (!value) {
-      return this.element.dataset[key];
+      return this.elements[0].dataset[key];
     }
-    this.element.dataset[key] = value;
+    for (let i = 0; i < this.elements.length; i++) {
+      this.elements[i].dataset[key] = value;
+    }
+
     return this;
   }
 
@@ -80,9 +83,11 @@ class F5 {
    */
   css(key, value) {
     if (!value) {
-      return this.element.style[key];
+      return getComputedStyle(this.elements[0])[key];
     }
-    this.element.style[key] = value;
+    for (let i = 0; i < this.elements.length; i++) {
+      this.elements[i].style[key] = value;
+    }
     return this;
   }
 
@@ -93,7 +98,9 @@ class F5 {
    * @param {function} callback
    */
   when(event, callback) {
-    this.element.addEventListener(event, callback);
+    for (let i = 0; i < this.elements.length; i++) {
+      this.elements[i].addEventListener(event, callback);
+    }
   }
 
   /**
@@ -135,7 +142,11 @@ class F5 {
    * @param {string} className
    */
   hasClass(className) {
-    return this.element.classList.contains(className);
+    let hasClass = false;
+    for (let i = 0; i < this.elements.length; i++) {
+      if (this.elements[i].classList.contains(className)) hasClass = true;
+    }
+    return hasClass;
   }
 
   /**
@@ -144,7 +155,9 @@ class F5 {
    * @param {string} className
    */
   addClass(className) {
-    this.element.classList.add(className);
+    for (let i = 0; i < this.elements.length; i++) {
+      this.elements[i].classList.add(className);
+    }
     return this;
   }
 
@@ -154,19 +167,25 @@ class F5 {
    * @param {string} className
    */
   removeClass(className) {
-    this.element.classList.remove(className);
+    for (let i = 0; i < this.elements.length; i++) {
+      this.elements[i].classList.remove(className);
+    }
     return this;
   }
 
   /**
-   * Toggles a className. Means that if the element has the className it will be removed and if the element does not have the className it will be added.
+   * Toggles a className.
+   * Means that if the element has the className it will be removed and if the element does not have the className it will be added.
+   *
    * @param {string} className
    */
   toggleClass(className) {
-    if (this.hasClass(className)) {
-      this.element.classList.remove(className);
-    } else {
-      this.element.classList.add(className);
+    for (let i = 0; i < this.elements.length; i++) {
+      if (this.hasClass(className)) {
+        this.elements[i].classList.remove(className);
+      } else {
+        this.elements[i].classList.add(className);
+      }
     }
     return this;
   }
@@ -215,49 +234,88 @@ class F5 {
   }
 
   /**
-   * This functions return a boolean if an element exists in the DOM
+   * This functions return a boolean if an element exists in the DOM.
    */
   exists() {
     return this.element ? true : false;
   }
 
   /**
-   * This functions allows you to add an toggler element to an element. The data identifier of the elements has to be the same.
-   * Usage example: accordion
-   *
-   * @param {f5element} togglerElements
-   * @param {function} callback
-   * @param {object} options
-   * @param {string} identifier
+   * This functions return the first element of the current selector.
    */
-  addToggler(togglerElements, callback, options, identifier = "id") {
-    // close content on load
-    if (options.closeOnLoad) {
-      this.each((element) => element.hide());
+  first() {
+    return new F5(getUniqueSelector(this.elements[0]));
+  }
+
+  /**
+   * This functions return the last element of the current selector.
+   */
+  last() {
+    return new F5(getUniqueSelector(this.elements[this.elements.length - 1]));
+  }
+
+  /**
+   * This function returns the parent node with the passed selector (optional).
+   * It also checks if the parent, parent, parent, etc. node exists and returns this node when possible.
+   *
+   * @param {*} selector
+   */
+  parent(selector) {
+    let parents = [];
+    for (let i = 0; i < this.elements.length; i++) {
+      if (!selector) {
+        if (this.elements[i].parentElement) {
+          parents.push(getUniqueSelector(this.elements[i].parentElement));
+          continue;
+        }
+      }
+
+      let node = this.elements[i];
+
+      while (node.parentElement) {
+        if (node.parentElement.matches(selector)) {
+          parents.push(getUniqueSelector(node.parentElement));
+          break;
+        }
+        node = node.parentElement;
+      }
     }
-    // loop over all
-    togglerElements.each((togglerElement) => {
-      // register click on toggler
-      togglerElement.when("click", (event) => {
-        // loop over content elements
-        this.each((content) => {
-          // if content element has same data identifier like toggler
-          if (
-            content.data(identifier) &&
-            togglerElement.data(identifier) &&
-            content.data(identifier) == togglerElement.data(identifier)
-          ) {
-            // toggle visibility of content
-            content.toggle();
-            // trigger callback for further custom user actions
-            callback();
-          } else {
-            // hide content if element and toggler has another data identifier and 'closeOthers' option is set
-            if (options.closeOthers) content.hide();
+
+    return new F5(implode(parents));
+  }
+
+  /**
+   * This function returns the child node with the passed selector (optional).
+   *
+   * @param {*} selector
+   */
+  child(selector) {
+    let childs = [];
+    for (let i = 0; i < this.elements.length; i++) {
+      if (!selector) {
+        if (this.elements[i].childNodes) {
+          for (let j = 0; j < this.elements[i].childNodes.length; j++) {
+            childs.push(getUniqueSelector(this.elements[i].childNodes[j]));
           }
-        });
-      });
-    });
+          continue;
+        }
+      }
+
+      let node = this.elements[i];
+      while (node.childNodes) {
+        for (let j = 0; j < node.childNodes.length; j++) {
+          console.log(node.childNodes[j]);
+          if (node.childNodes[j].matches(selector)) {
+            // TODO
+            childs.push(getUniqueSelector(node.childNodes[j]));
+            break;
+          }
+          node = node.childNodes[j];
+        }
+      }
+    }
+
+    return new F5(implode(childs));
   }
 }
 
@@ -267,11 +325,22 @@ function getUniqueSelector(node) {
     const siblings = Array.from(node.parentElement.children).filter(
       (e) => e.tagName === node.tagName
     );
+
     selector =
-      (siblings.indexOf(node)
-        ? `${node.tagName}:nth-of-type(${siblings.indexOf(node) + 1})`
-        : `${node.tagName}`) + `${selector ? " > " : ""}${selector}`;
+      `${node.tagName}:nth-of-type(${siblings.indexOf(node) + 1})` +
+      `${selector ? " > " : ""}${selector}`;
     node = node.parentElement;
   }
   return `html > ${selector.toLowerCase()}`;
+}
+
+function implode(arr, delimiter = ", ") {
+  let result = "";
+  for (let i = 0; i < arr.length; i++) {
+    result += arr[i];
+    if (i != arr.length - 1) {
+      result += delimiter;
+    }
+  }
+  return result;
 }
